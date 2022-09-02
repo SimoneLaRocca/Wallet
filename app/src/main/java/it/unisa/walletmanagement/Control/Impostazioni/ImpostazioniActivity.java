@@ -1,5 +1,11 @@
 package it.unisa.walletmanagement.Control.Impostazioni;
 
+import android.content.Intent;
+import android.content.res.Configuration;
+import android.os.Bundle;
+import android.view.MenuItem;
+import android.view.View;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBarDrawerToggle;
@@ -8,21 +14,11 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
-import android.content.Intent;
-import android.content.res.Configuration;
-import android.os.Bundle;
-import android.view.MenuItem;
-import android.view.View;
-
 import com.google.android.material.navigation.NavigationView;
 
-import it.unisa.walletmanagement.Control.GestioneConti.Activity.CategorieActivity;
-import it.unisa.walletmanagement.Control.GestioneConti.Activity.HomeActivity;
-import it.unisa.walletmanagement.Control.GestioneConti.Activity.MovimentiActivity;
-import it.unisa.walletmanagement.Control.Impostazioni.Fragment.CambiaPasswordDialog;
-import it.unisa.walletmanagement.Control.Impostazioni.Fragment.ImpostaPasswordDialog;
-import it.unisa.walletmanagement.Control.Impostazioni.Fragment.RimuoviPasswordDialog;
+import it.unisa.walletmanagement.Control.Impostazioni.Fragment.*;
 import it.unisa.walletmanagement.R;
+import it.unisa.walletmanagement.Utilities.MenuManager;
 
 public class ImpostazioniActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
@@ -30,10 +26,10 @@ public class ImpostazioniActivity extends AppCompatActivity
                 CambiaPasswordDialog.PasswordListener,
                     RimuoviPasswordDialog.PasswordListener {
 
-    DrawerLayout drawerLayout;
-    Toolbar toolbar;
-    NavigationView navigationView;
-    ActionBarDrawerToggle toggle;
+    private DrawerLayout drawerLayout;
+    private Toolbar toolbar;
+    private NavigationView navigationView;
+    private ActionBarDrawerToggle toggle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +47,7 @@ public class ImpostazioniActivity extends AppCompatActivity
         toolbar = findViewById(R.id.toolbar);
         navigationView = findViewById(R.id.nav_view);
         setSupportActionBar(toolbar);
+        getSupportActionBar().setTitle("IMPOSTAZIONI");
         toggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar,
                 R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawerLayout.addDrawerListener(toggle);
@@ -74,25 +71,43 @@ public class ImpostazioniActivity extends AppCompatActivity
         rimuoviPasswordDialog.show(getSupportFragmentManager(), "Rimuovi password");
     }
 
-    // imposta password
+    /**
+     * Metodo dell'interfaccia ImpostaPasswordDialog.PasswordListener.
+     * Imposta la password attraverso il SecurityManager e rilancia l'activity.
+     * @param password selezionata dall'utente
+     */
     @Override
     public void sendPassword(String password) {
         SecurityManager securityManager = new SecurityManager(getApplicationContext());
         securityManager.doSavePassword(password);
+        Intent intent = getIntent();
+        finish();
+        startActivity(intent);
     }
 
-    // cambia password
+    /**
+     * Metodo dell'interfaccia CambiaPasswordDialog.PasswordListener.
+     * Cambia la password attraverso il SecurityManager.
+     * @param password nuova password selezionata dall'utente
+     */
     @Override
     public void sendNewPassword(String password) {
         SecurityManager securityManager = new SecurityManager(getApplicationContext());
         securityManager.doSavePassword(password);
     }
 
-    // rimuovi password
+    /**
+     * Metodo dell'interfaccia RimuoviPasswordDialog.PasswordListener.
+     * Rimuove la password attraverso il SecurityManager e rilancia l'activity.
+     * @param password password attuale
+     */
     @Override
     public void sendDeletedPassword(String password) {
         SecurityManager securityManager = new SecurityManager(getApplicationContext());
         securityManager.doRemovePassword(password);
+        Intent intent = getIntent();
+        finish();
+        startActivity(intent);
     }
 
     @Override
@@ -117,33 +132,11 @@ public class ImpostazioniActivity extends AppCompatActivity
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-        Intent i;
-
-        switch(item.getItemId())
-        {
-            case R.id.home:
-                i = new Intent(ImpostazioniActivity.this, HomeActivity.class);
-                startActivity(i);
-                break;
-            case R.id.movimenti:
-                i = new Intent(ImpostazioniActivity.this, MovimentiActivity.class);
-                startActivity(i);
-                break;
-            case R.id.categorie:
-                i = new Intent(ImpostazioniActivity.this, CategorieActivity.class);
-                startActivity(i);
-                break;
-            case R.id.calcolatrice:
-                break;
-            case R.id.grafici:
-                break;
-            case R.id.listaSpesa:
-                break;
-            case R.id.impostazioni:
-                break;
-            case R.id.logout:
-                break;
+        if(item.getItemId() == R.id.logout){
+            this.finishAffinity();
+            System.exit(0);
         }
+        startActivity(MenuManager.menuItemSelected(item, ImpostazioniActivity.this));
         return true;
     }
 }

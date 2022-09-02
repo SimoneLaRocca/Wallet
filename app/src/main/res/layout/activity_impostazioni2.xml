@@ -43,6 +43,7 @@
                 android:orientation="horizontal">
 
                 <Button
+                    android:id="@+id/button_cambia_password"
                     android:onClick="changePassword"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -51,6 +52,7 @@
                     android:textColor="@color/white"/>
 
                 <Button
+                    android:id="@+id/button_rimuovi_password"
                     android:onClick="removePassword"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

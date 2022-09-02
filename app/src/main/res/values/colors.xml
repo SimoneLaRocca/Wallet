@@ -10,4 +10,12 @@
     <color name="red_209">#D1515C</color>
     <color name="red">#FF0000</color>
     <color name="green">#4CAF50</color>
+    <color name="coral">#FF5765</color>
+    <color name="yellow">#FFDB15</color>
+    <color name="violet">#8A6FDF</color>
+    <color name="kelly_green">#A8E10C</color>
+    <color name="gray">#D3D3D3</color>
+    <color name="blue_grotto">#0E86D4</color>
+    <color name="lime_green">#76B947</color>
+    <color name="tiger_lily">#B97D60</color>
 </resources>

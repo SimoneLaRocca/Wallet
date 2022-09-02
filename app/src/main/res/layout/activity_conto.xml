@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".Control.GestioneConti.Activity.ContoActivity">
+    tools:context=".Control.GestioneConti.Activity.ContoActivity"
+    android:background="#F8F8F8">
 
     <include
         android:id="@+id/layout_toolbar"
@@ -14,15 +15,19 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_above="@+id/button_aggiungi_movimento_conto"
-        android:orientation="vertical"
-        android:layout_marginTop="?attr/actionBarSize"
         android:layout_alignParentTop="true"
-        android:layout_centerInParent="true">
+        android:layout_centerInParent="true"
+        android:layout_marginTop="?attr/actionBarSize"
+        android:orientation="vertical">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:background="@drawable/border_light"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginTop="20dp"
+            android:paddingVertical="10dp">
 
             <TextView
                 android:id="@+id/text_view_nome_conto"
@@ -30,34 +35,18 @@
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="20dp"
                 android:text="CONTO: "
+                android:textColor="@color/black"
                 android:textSize="20dp"
-                android:textStyle="bold"
-                android:layout_marginVertical="20dp"
-                android:textColor="@color/black"/>
+                android:textStyle="bold" />
 
-            <LinearLayout
+            <TextView
+                android:id="@+id/text_view_saldo_conto"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="20dp"
-                    android:text="Lista movimenti"
-                    android:textSize="20dp"
-                    android:textColor="@color/black"/>
-
-                <TextView
-                    android:id="@+id/text_view_saldo_conto"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textAlignment="textEnd"
-                    android:layout_marginRight="20dp"
-                    android:text="Totale saldo: "
-                    android:textSize="20dp"
-                    android:textColor="@color/black"/>
-            </LinearLayout>
+                android:layout_marginHorizontal="20dp"
+                android:text="Saldo: "
+                android:textColor="@color/black"
+                android:textSize="20dp" />
 
         </LinearLayout>
 
@@ -65,21 +54,21 @@
             android:id="@+id/list_view_movimenti_conto"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@drawable/border_red_209"
-            android:layout_margin="20dp"/>
+            android:layout_margin="20dp"
+            android:background="@drawable/border_light" />
 
     </LinearLayout>
 
     <Button
         android:id="@+id/button_aggiungi_movimento_conto"
-        android:onClick="creaMovimento"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="20dp"
+        android:backgroundTint="@color/red_209"
+        android:onClick="creaMovimento"
         android:text="Aggiungi movimento"
-        android:textColor="@color/white"
-        android:backgroundTint="@color/red_209"/>
+        android:textColor="@color/white" />
 
 </RelativeLayout>

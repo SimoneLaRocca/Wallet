@@ -10,6 +10,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.WalletManagement">
         <activity
+            android:name=".Control.Calcolatrice.CalcolatriceActivity"
+            android:exported="true" />
+        <activity
+            android:name=".Control.Grafici.GraficiActivity"
+            android:exported="true" />
+        <activity
             android:name=".Control.ListaSpesa.ListaSpesaActivity"
             android:exported="true" />
         <activity

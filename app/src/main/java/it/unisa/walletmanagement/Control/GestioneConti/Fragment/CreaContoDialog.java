@@ -12,6 +12,8 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import java.util.regex.Pattern;
+
 import it.unisa.walletmanagement.Model.Entity.Conto;
 import it.unisa.walletmanagement.R;
 
@@ -71,20 +73,42 @@ public class CreaContoDialog extends DialogFragment {
         return view;
     }
 
+    /**
+     * Verifica la correttezza di tutti i campi del fragment dialog.
+     * Se un campo non rispetta tutti i requisiti viene lanciato un errore.
+     * @return un valore booleano per segnalare se tutti i campi sono corretti
+     */
     private boolean CheckAllFields() {
-        if (etNome.getText().toString().length() == 0) {
-            etNome.setError("Questo campo è richiesto");
-            return false;
+
+        if(!Pattern.compile("[A-zÀ-ù0-9 -,]{3,30}").matcher(etNome.getText().toString()).matches()){
+            if (etNome.getText().toString().length() == 0) {
+                etNome.setError("Questo campo è richiesto");
+                return false;
+            } else if(etNome.getText().toString().length() > 30){
+                etNome.setError("Questo campo non deve superare i 30 caratteri");
+                return false;
+            }
         }
 
-        if (etSaldo.getText().toString().length() == 0) {
-            etSaldo.setError("Questo campo è richiesto");
-            return false;
-        } else if(Float.parseFloat(etSaldo.getText().toString()) < 0){
-            etSaldo.setError("Il saldo deve essere positivo");
-            return false;
+        if(!Pattern.compile("[0-9]{1,9}[.]{0,1}[0-9]{0,2}").matcher(etSaldo.getText().toString()).matches()) {
+            float saldo;
+            try {
+                saldo = Float.parseFloat(etSaldo.getText().toString());
+            }catch (Exception e){
+                etSaldo.setError("Utilizza il formato (123.45)");
+                return false;
+            }
+            if (saldo == 0) {
+                etSaldo.setError("Questo campo è richiesto");
+                return false;
+            } else if (saldo < 0) {
+                etSaldo.setError("Il saldo deve essere positivo");
+                return false;
+            } else {
+                etSaldo.setError("Utilizza il formato (123.45)");
+                return false;
+            }
         }
-
         // after all validation return true.
         return true;
     }

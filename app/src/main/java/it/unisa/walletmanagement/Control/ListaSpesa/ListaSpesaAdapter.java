@@ -15,7 +15,6 @@ import androidx.annotation.Nullable;
 
 import java.util.List;
 
-import it.unisa.walletmanagement.Model.Dao.ListaCategorieDAO;
 import it.unisa.walletmanagement.Model.Dao.ListaSpesaDAO;
 import it.unisa.walletmanagement.R;
 

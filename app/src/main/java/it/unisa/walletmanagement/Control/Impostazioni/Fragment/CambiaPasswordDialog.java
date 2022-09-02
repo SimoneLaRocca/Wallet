@@ -2,16 +2,16 @@ package it.unisa.walletmanagement.Control.Impostazioni.Fragment;
 
 import android.content.Context;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.fragment.app.DialogFragment;
-import androidx.fragment.app.Fragment;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.fragment.app.DialogFragment;
+
+import java.util.regex.Pattern;
 
 import it.unisa.walletmanagement.Control.Impostazioni.SecurityManager;
 import it.unisa.walletmanagement.R;
@@ -68,6 +68,11 @@ public class CambiaPasswordDialog extends DialogFragment {
         return view;
     }
 
+    /**
+     * Verifica la correttezza di tutti i campi del fragment dialog.
+     * Se un campo non rispetta tutti i requisiti viene lanciato un errore.
+     * @return un valore booleano per segnalare se tutti i campi sono corretti
+     */
     private boolean CheckAllFields() {
         SecurityManager securityManager = new SecurityManager(getActivity().getApplicationContext());
         if (etOldPassword.getText().toString().length() == 0) {
@@ -78,19 +83,21 @@ public class CambiaPasswordDialog extends DialogFragment {
             return false;
         }
 
-        if (etNewFirstPassword.getText().toString().length() < 0) {
-            etNewFirstPassword.setError("Questo campo è richiesto");
-            return false;
-        } else if(etNewFirstPassword.getText().toString().length() < 4){
-            etNewFirstPassword.setError("Almeno 4 caratteri/cifre");
-            return false;
+        if(Pattern.compile("[\\w]{4,30}").matcher(etNewFirstPassword.getText().toString()).matches()) {
+            if (etNewFirstPassword.getText().toString().length() == 0) {
+                etNewFirstPassword.setError("Questo campo è richiesto");
+                return false;
+            } else if (etNewFirstPassword.getText().toString().length() < 4) {
+                etNewFirstPassword.setError("Almeno 4 caratteri/cifre");
+                return false;
+            }
         }
 
         if (etNewSecondPassword.getText().toString().length() == 0) {
             etNewSecondPassword.setError("Questo campo è richiesto");
             return false;
         } else if(!etNewFirstPassword.getText().toString().equals(etNewSecondPassword.getText().toString())){
-            etNewSecondPassword.setError("Retyping error");
+            etNewSecondPassword.setError("I campi non sono uguali");
             return false;
         }
 

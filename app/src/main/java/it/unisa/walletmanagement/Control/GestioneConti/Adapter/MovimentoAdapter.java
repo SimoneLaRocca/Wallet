@@ -15,6 +15,7 @@ import androidx.annotation.Nullable;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
+import it.unisa.walletmanagement.Control.GestioneConti.Activity.ContoActivity;
 import it.unisa.walletmanagement.Model.Dao.MovimentoDAO;
 import it.unisa.walletmanagement.Model.Entity.Movimento;
 import it.unisa.walletmanagement.R;
@@ -63,7 +64,9 @@ public class MovimentoAdapter extends ArrayAdapter<Movimento> {
                 movimentoDAO.deleteMovimento(m.getId());
                 MovimentoAdapter.this.remove(getItem(position));
                 MovimentoAdapter.this.notifyDataSetChanged();
-                movimentoListener.deleteMovimento(m);
+                if(context.getClass().equals(ContoActivity.class)){
+                    movimentoListener.deleteMovimento(m);
+                }
             }
         });
 

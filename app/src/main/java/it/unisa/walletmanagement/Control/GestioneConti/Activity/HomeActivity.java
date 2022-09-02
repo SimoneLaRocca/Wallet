@@ -1,5 +1,15 @@
 package it.unisa.walletmanagement.Control.GestioneConti.Activity;
 
+import android.content.Intent;
+import android.content.res.Configuration;
+import android.os.Bundle;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBarDrawerToggle;
@@ -8,45 +18,34 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
-import android.content.Context;
-import android.content.Intent;
-import android.content.res.Configuration;
-import android.os.Bundle;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ListView;
-import android.widget.TextView;
-
 import com.google.android.material.navigation.NavigationView;
 
 import java.util.ArrayList;
 
 import it.unisa.walletmanagement.Control.GestioneConti.Adapter.ContoAdapter;
 import it.unisa.walletmanagement.Control.GestioneConti.Fragment.CreaContoDialog;
-import it.unisa.walletmanagement.Control.Impostazioni.ImpostazioniActivity;
 import it.unisa.walletmanagement.Control.Impostazioni.LoginActivity;
 import it.unisa.walletmanagement.Control.Impostazioni.SecurityManager;
-import it.unisa.walletmanagement.Control.ListaSpesa.ListaSpesaActivity;
 import it.unisa.walletmanagement.Model.Dao.ContoDAO;
 import it.unisa.walletmanagement.Model.Entity.Conto;
 import it.unisa.walletmanagement.R;
+import it.unisa.walletmanagement.Utilities.MenuManager;
 
-// Activity home usata per visualizzare la lista completa
-// dei conti dell'utente
-public class HomeActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, CreaContoDialog.ContoListener {
+public class HomeActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener,
+        CreaContoDialog.ContoListener {
 
-    ContoAdapter contoAdapter;
-    ListView listViewConto;
-    ArrayList<Conto> lista_conti;
-    ContoDAO contoDAO;
+    private ContoAdapter contoAdapter;
+    private ListView listViewConto;
+    private ArrayList<Conto> lista_conti;
+    private ContoDAO contoDAO;
 
-    TextView tvNessunConto;
+    private TextView tvNessunConto;
+    private ImageView imageViewIcon;
 
-    DrawerLayout drawerLayout;
-    Toolbar toolbar;
-    NavigationView navigationView;
-    ActionBarDrawerToggle toggle;
+    private DrawerLayout drawerLayout;
+    private Toolbar toolbar;
+    private NavigationView navigationView;
+    private ActionBarDrawerToggle toggle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,6 +65,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         toolbar = findViewById(R.id.toolbar);
         navigationView = findViewById(R.id.nav_view);
         setSupportActionBar(toolbar);
+        getSupportActionBar().setTitle("HOME");
         toggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar,
                 R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawerLayout.addDrawerListener(toggle);
@@ -77,17 +77,20 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         listViewConto.setAdapter(contoAdapter);
 
         tvNessunConto = findViewById(R.id.text_view_nessun_conto);
+        imageViewIcon = findViewById(R.id.image_view_icon_conto);
 
         contoDAO = new ContoDAO(getApplicationContext());
         lista_conti = (ArrayList<Conto>) contoDAO.doRetrieveAllWithCurrentBalance();
         if(lista_conti != null){
             tvNessunConto.setVisibility(View.INVISIBLE);
+            imageViewIcon.setVisibility(View.INVISIBLE);
             listViewConto.setVisibility(View.VISIBLE);
             for(Conto conto : lista_conti){
                 contoAdapter.add(conto);
             }
         }else {
             tvNessunConto.setVisibility(View.VISIBLE);
+            imageViewIcon.setVisibility(View.VISIBLE);
             listViewConto.setVisibility(View.INVISIBLE);
         }
 
@@ -107,9 +110,16 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         creaContoDialog.show(getSupportFragmentManager(), "Crea conto");
     }
 
+    /**
+     * Metodo dell'interfaccia CreaContoDialog.ContoListener.
+     * Riceve il conto dal fragment dialog, si occupa del suo salvataggio nel db
+     * e dell'aggiornamento del layout dell'activity.
+     * @param conto ricevuto dal fragment
+     */
     @Override
     public void sendConto(Conto conto) {
         tvNessunConto.setVisibility(View.INVISIBLE);
+        imageViewIcon.setVisibility(View.INVISIBLE);
         listViewConto.setVisibility(View.VISIBLE);
         if(contoDAO.insertConto(conto.getNome(), conto.getSaldo())){
             contoAdapter.add(conto);
@@ -139,35 +149,11 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-        Intent i;
-
-        switch(item.getItemId())
-        {
-            case R.id.home:
-                break;
-            case R.id.movimenti:
-                i = new Intent(HomeActivity.this, MovimentiActivity.class);
-                startActivity(i);
-                break;
-            case R.id.categorie:
-                i = new Intent(HomeActivity.this, CategorieActivity.class);
-                startActivity(i);
-                break;
-            case R.id.calcolatrice:
-                break;
-            case R.id.grafici:
-                break;
-            case R.id.listaSpesa:
-                i = new Intent(HomeActivity.this, ListaSpesaActivity.class);
-                startActivity(i);
-                break;
-            case R.id.impostazioni:
-                i = new Intent(HomeActivity.this, ImpostazioniActivity.class);
-                startActivity(i);
-                break;
-            case R.id.logout:
-                break;
+        if(item.getItemId() == R.id.logout){
+            this.finishAffinity();
+            System.exit(0);
         }
+        startActivity(MenuManager.menuItemSelected(item, HomeActivity.this));
         return true;
     }
 }

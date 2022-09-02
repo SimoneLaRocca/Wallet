@@ -1,15 +1,7 @@
 package it.unisa.walletmanagement.Control.GestioneConti.Activity;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.ActionBarDrawerToggle;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.core.view.GravityCompat;
-import androidx.drawerlayout.widget.DrawerLayout;
-
-import android.content.Intent;
 import android.content.res.Configuration;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.MenuItem;
@@ -18,6 +10,14 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.google.android.material.navigation.NavigationView;
 
@@ -32,25 +32,26 @@ import it.unisa.walletmanagement.Model.Dao.MovimentoDAO;
 import it.unisa.walletmanagement.Model.Entity.Conto;
 import it.unisa.walletmanagement.Model.Entity.Movimento;
 import it.unisa.walletmanagement.R;
+import it.unisa.walletmanagement.Utilities.MenuManager;
 
 public class ContoActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
             ModificaMovimentoDialog.ModificaMovimentoListener,
                 CreaMovimentoDialog.CreaMovimentoListener, MovimentoAdapter.MovimentoListener {
 
-    MovimentoAdapter movimentoAdapter;
-    ListView listViewMovimenti;
-    Conto conto;
-    ContoDAO contoDAO;
-    MovimentoDAO movimentoDAO;
-    ListaCategorieDAO listaCategorieDAO;
+    private MovimentoAdapter movimentoAdapter;
+    private ListView listViewMovimenti;
+    private Conto conto;
+    private ContoDAO contoDAO;
+    private MovimentoDAO movimentoDAO;
+    private ListaCategorieDAO listaCategorieDAO;
 
-    TextView tvNomeConto, tvSaldoConto;
+    private TextView tvNomeConto, tvSaldoConto;
 
-    DrawerLayout drawerLayout;
-    Toolbar toolbar;
-    NavigationView navigationView;
-    ActionBarDrawerToggle toggle;
+    private DrawerLayout drawerLayout;
+    private Toolbar toolbar;
+    private NavigationView navigationView;
+    private ActionBarDrawerToggle toggle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +63,7 @@ public class ContoActivity extends AppCompatActivity
         toolbar = findViewById(R.id.toolbar);
         navigationView = findViewById(R.id.nav_view);
         setSupportActionBar(toolbar);
+        getSupportActionBar().setTitle("CONTO");
         toggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar,
                 R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawerLayout.addDrawerListener(toggle);
@@ -80,17 +82,12 @@ public class ContoActivity extends AppCompatActivity
 
         contoDAO = new ContoDAO(getApplicationContext());
         movimentoDAO = new MovimentoDAO(getApplicationContext());
-        Conto conto2 = contoDAO.doRetrieveByName(conto.getNome());
-        if(conto2 != null) {
-            for (Movimento movimento : conto2.getMovimenti()) {
-                movimentoAdapter.add(movimento);
-            }
-        }
+        listaCategorieDAO = new ListaCategorieDAO(getApplicationContext());
+
+        new LoadMovimenti().execute();
 
         tvNomeConto.setText("CONTO: " + conto.getNome());
-        tvSaldoConto.setText("Saldo corrente: " + movimentoDAO.doRetrieveCurrentBalance(conto.getNome()));
-
-        listaCategorieDAO = new ListaCategorieDAO(getApplicationContext());
+        tvSaldoConto.setText("Saldo: " + movimentoDAO.doRetrieveCurrentBalance(conto.getNome()));
 
         listViewMovimenti.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -119,29 +116,47 @@ public class ContoActivity extends AppCompatActivity
         }
     }
 
-    // modifica movimento
+    /**
+     * Metodo dell'interfaccia ModificaMovimentoDialog.ModificaMovimentoListener.
+     * Riceve il movimento, lo aggiorna nel db ed
+     * aggiorna il listView del layout dell'activity.
+     * @param oldMovimento vecchia versione del movimento, necessaria
+     *                     per rimuovere l'istanza dall'adapter del list view
+     * @param newMovimento movimento aggiornato
+     */
     @Override
     public void sendUpdatedMovimento(Movimento oldMovimento, Movimento newMovimento) {
         movimentoAdapter.remove(oldMovimento);
         movimentoDAO.updateMovimento(newMovimento);
         movimentoAdapter.add(newMovimento);
         movimentoAdapter.notifyDataSetChanged();
-        tvSaldoConto.setText("Saldo corrente: " + movimentoDAO.doRetrieveCurrentBalance(conto.getNome()));
+        tvSaldoConto.setText("Saldo: " + movimentoDAO.doRetrieveCurrentBalance(conto.getNome()));
     }
 
-    // aggiunta nuovo movimento
+    /**
+     * Metodo dell'interfaccia CreaMovimentoDialog.CreaMovimentoListener.
+     * Riceve il nuovo movimento creato, lo salva nel db ed
+     * aggiorna il listView del layout dell'activity.
+     * @param movimento nuovo movimento creato
+     */
     @Override
     public void sendNewMovimento(Movimento movimento) {
         movimentoDAO.insertMovimento(movimento, conto.getNome());
-        movimentoAdapter.add(movimento);
+        movimentoAdapter.clear();
+        new LoadMovimenti().execute();
         movimentoAdapter.notifyDataSetChanged();
-        tvSaldoConto.setText("Saldo corrente: " + movimentoDAO.doRetrieveCurrentBalance(conto.getNome()));
+        tvSaldoConto.setText("Saldo: " + movimentoDAO.doRetrieveCurrentBalance(conto.getNome()));
     }
 
-    // cancellazione movimento
+    /**
+     * Metodo dell'interfaccia MovimentoAdapter.MovimentoListener.
+     * Usato per sapere quando viene cancellato un movimento e di
+     * conseguenza quando aggiornare il layout dell'activity
+     * @param movimento movimento rimosso dal db
+     */
     @Override
     public void deleteMovimento(Movimento movimento) {
-        tvSaldoConto.setText("Saldo corrente: " + movimentoDAO.doRetrieveCurrentBalance(conto.getNome()));
+        tvSaldoConto.setText("Saldo: " + movimentoDAO.doRetrieveCurrentBalance(conto.getNome()));
     }
 
     public void showToastCustomizzato(int layout) {
@@ -174,33 +189,32 @@ public class ContoActivity extends AppCompatActivity
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-        Intent i;
-
-        switch(item.getItemId())
-        {
-            case R.id.home:
-                i = new Intent(ContoActivity.this, HomeActivity.class);
-                startActivity(i);
-                break;
-            case R.id.movimenti:
-                i = new Intent(ContoActivity.this, MovimentiActivity.class);
-                startActivity(i);
-                break;
-            case R.id.categorie:
-                i = new Intent(ContoActivity.this, CategorieActivity.class);
-                startActivity(i);
-                break;
-            case R.id.calcolatrice:
-                break;
-            case R.id.grafici:
-                break;
-            case R.id.listaSpesa:
-                break;
-            case R.id.impostazioni:
-                break;
-            case R.id.logout:
-                break;
+        if(item.getItemId() == R.id.logout){
+            this.finishAffinity();
+            System.exit(0);
         }
+        startActivity(MenuManager.menuItemSelected(item, ContoActivity.this));
         return true;
     }
+
+    class LoadMovimenti extends AsyncTask<Void, Void, Conto>{
+
+        @Override
+        protected Conto doInBackground(Void... voids) {
+            Conto c = contoDAO.doRetrieveByName(conto.getNome());
+            return c;
+        }
+
+        @Override
+        protected void onPostExecute(Conto c) {
+            if(c != null) {
+                for (Movimento movimento : c.getMovimenti()) {
+                    movimentoAdapter.add(movimento);
+                }
+                movimentoAdapter.notifyDataSetChanged();
+            }
+        }
+
+    }
+
 }

@@ -1,5 +1,11 @@
 package it.unisa.walletmanagement.Control.ListaSpesa;
 
+import android.content.res.Configuration;
+import android.os.Bundle;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.ListView;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBarDrawerToggle;
@@ -8,31 +14,18 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
-import android.content.Intent;
-import android.content.res.Configuration;
-import android.graphics.Paint;
-import android.os.Bundle;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.CheckBox;
-import android.widget.ListView;
-import android.widget.TextView;
-
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 
 import java.util.ArrayList;
 
-import it.unisa.walletmanagement.Control.GestioneConti.Activity.HomeActivity;
-import it.unisa.walletmanagement.Control.GestioneConti.Activity.MovimentiActivity;
-import it.unisa.walletmanagement.Control.GestioneConti.Adapter.CategorieAdapter;
-import it.unisa.walletmanagement.Model.Dao.ListaCategorieDAO;
 import it.unisa.walletmanagement.Model.Dao.ListaSpesaDAO;
 import it.unisa.walletmanagement.Model.Entity.ListaSpesa;
 import it.unisa.walletmanagement.R;
+import it.unisa.walletmanagement.Utilities.MenuManager;
 
-public class ListaSpesaActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, AggiungiVoceDialog.ListaSpesaListener {
+public class ListaSpesaActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener,
+        AggiungiVoceDialog.ListaSpesaListener {
 
     private ListView listViewListaSpesa;
     private ListaSpesaAdapter listaSpesaAdapter;
@@ -55,6 +48,7 @@ public class ListaSpesaActivity extends AppCompatActivity implements NavigationV
         toolbar = findViewById(R.id.toolbar);
         navigationView = findViewById(R.id.nav_view);
         setSupportActionBar(toolbar);
+        getSupportActionBar().setTitle("LISTA DELLA SPESA");
         toggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar,
                 R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawerLayout.addDrawerListener(toggle);
@@ -83,7 +77,11 @@ public class ListaSpesaActivity extends AppCompatActivity implements NavigationV
         }
     }
 
-    // aggiungi nuova voce
+    /**
+     * Metodo dell'interfaccia AggiungiVoceDialog.ListaSpesaListener.
+     * Riceve la voce dal fragment dialog e la salva nel file.
+     * @param voce ricevuta dal fragment
+     */
     @Override
     public void sendVoce(String voce) {
         listaSpesaDAO.insertVoce(voce);
@@ -113,31 +111,11 @@ public class ListaSpesaActivity extends AppCompatActivity implements NavigationV
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-        Intent i;
-
-        switch(item.getItemId())
-        {
-            case R.id.home:
-                i = new Intent(ListaSpesaActivity.this, HomeActivity.class);
-                startActivity(i);
-                break;
-            case R.id.movimenti:
-                i = new Intent(ListaSpesaActivity.this, MovimentiActivity.class);
-                startActivity(i);
-                break;
-            case R.id.categorie:
-                break;
-            case R.id.calcolatrice:
-                break;
-            case R.id.grafici:
-                break;
-            case R.id.listaSpesa:
-                break;
-            case R.id.impostazioni:
-                break;
-            case R.id.logout:
-                break;
+        if(item.getItemId() == R.id.logout){
+            this.finishAffinity();
+            System.exit(0);
         }
+        startActivity(MenuManager.menuItemSelected(item, ListaSpesaActivity.this));
         return true;
     }
 }

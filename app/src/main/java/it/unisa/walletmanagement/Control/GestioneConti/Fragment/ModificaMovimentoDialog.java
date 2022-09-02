@@ -15,9 +15,12 @@ import android.widget.TextView;
 
 import androidx.core.graphics.drawable.DrawableCompat;
 
+import java.util.regex.Pattern;
+
 import it.unisa.walletmanagement.Model.Dao.ListaCategorieDAO;
 import it.unisa.walletmanagement.Model.Entity.ListaCategorie;
 import it.unisa.walletmanagement.Model.Entity.Movimento;
+import it.unisa.walletmanagement.Model.Entity.MovimentoBuilder;
 import it.unisa.walletmanagement.R;
 
 public class ModificaMovimentoDialog extends androidx.fragment.app.DialogFragment {
@@ -141,17 +144,13 @@ public class ModificaMovimentoDialog extends androidx.fragment.app.DialogFragmen
             @Override
             public void onClick(View view) {
                 if(CheckAllFields()){
-                    Movimento newMovimento = new Movimento();
-                    newMovimento.setId(movimento.getId());
-                    newMovimento.setNome(etNome.getText().toString());
-                    newMovimento.setImporto(Float.parseFloat(etImporto.getText().toString()));
-                    newMovimento.setCategoria((String) dropdown.getSelectedItem());
-                    newMovimento.setData(movimento.getData());
-                    if(entrata.getTag().equals(true)){
-                        newMovimento.setTipo(1);
-                    }else {
-                        newMovimento.setTipo(0);
-                    }
+                    Movimento newMovimento = MovimentoBuilder.newBuilder(movimento.getId())
+                            .nome(etNome.getText().toString())
+                            .importo(Float.parseFloat(etImporto.getText().toString()))
+                            .data(movimento.getData())
+                            .categoria((String) dropdown.getSelectedItem())
+                            .tipo(entrata.getTag().equals(true) ? 1 : 0)
+                            .build();
                     modificaMovimentoListener.sendUpdatedMovimento(movimento, newMovimento);
                     getDialog().dismiss();
                 }
@@ -161,18 +160,41 @@ public class ModificaMovimentoDialog extends androidx.fragment.app.DialogFragmen
         return view;
     }
 
+    /**
+     * Verifica la correttezza di tutti i campi del fragment dialog.
+     * Se un campo non rispetta tutti i requisiti viene lanciato un errore.
+     * @return un valore booleano per segnalare se tutti i campi sono corretti
+     */
     private boolean CheckAllFields() {
-        if (etNome.getText().toString().length() == 0) {
-            etNome.setError("Questo campo è richiesto");
-            return false;
+
+        if(!Pattern.compile("[A-zÀ-ù0-9 -,]{3,30}").matcher(etNome.getText().toString()).matches()) {
+            if (etNome.getText().toString().length() == 0) {
+                etNome.setError("Questo campo è richiesto");
+                return false;
+            }else if(etNome.getText().toString().length() > 30){
+                etNome.setError("Questo campo non deve superare i 30 caratteri");
+                return false;
+            }
         }
 
-        if (etImporto.getText().toString().length() == 0) {
-            etImporto.setError("Questo campo è richiesto");
-            return false;
-        } else if(Float.parseFloat(etImporto.getText().toString()) < 0){
-            etImporto.setError("L'importo deve essere positivo");
-            return false;
+        if(!Pattern.compile("[0-9]{1,9}[.]{0,1}[0-9]{0,2}").matcher(etImporto.getText().toString()).matches()) {
+            float importo;
+            try {
+                importo = Float.parseFloat(etImporto.getText().toString());
+            }catch (Exception e){
+                etImporto.setError("Utilizza il formato (123.45)");
+                return false;
+            }
+            if (importo == 0) {
+                etImporto.setError("Questo campo è richiesto");
+                return false;
+            } else if (importo < 0) {
+                etImporto.setError("L'importo deve essere positivo");
+                return false;
+            }else {
+                etImporto.setError("Utilizza il formato (123.45)");
+                return false;
+            }
         }
 
         if (entrata.getTag().equals(false) && uscita.getTag().equals(false)) {

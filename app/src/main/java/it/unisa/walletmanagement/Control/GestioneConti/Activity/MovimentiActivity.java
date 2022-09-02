@@ -1,15 +1,7 @@
 package it.unisa.walletmanagement.Control.GestioneConti.Activity;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.ActionBarDrawerToggle;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.core.view.GravityCompat;
-import androidx.drawerlayout.widget.DrawerLayout;
-
-import android.content.Intent;
 import android.content.res.Configuration;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.MenuItem;
@@ -17,6 +9,14 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.google.android.material.navigation.NavigationView;
 
@@ -30,23 +30,25 @@ import it.unisa.walletmanagement.Model.Dao.ListaCategorieDAO;
 import it.unisa.walletmanagement.Model.Dao.MovimentoDAO;
 import it.unisa.walletmanagement.Model.Entity.Movimento;
 import it.unisa.walletmanagement.R;
+import it.unisa.walletmanagement.Utilities.MenuManager;
 
-public class MovimentiActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, ModificaMovimentoDialog.ModificaMovimentoListener, CreaMovimentoGenericoDialog.CreaMovimentoGenericoListener {
+public class MovimentiActivity extends AppCompatActivity
+        implements NavigationView.OnNavigationItemSelectedListener,
+        ModificaMovimentoDialog.ModificaMovimentoListener,
+        CreaMovimentoGenericoDialog.CreaMovimentoGenericoListener{
 
-    ListView listViewMovEntrate;
-    ListView listViewMovUscite;
-    MovimentoAdapter movimentoAdapterEntrate;
-    MovimentoAdapter movimentoAdapterUscite;
-    ArrayList<Movimento> lista_entrate;
-    ArrayList<Movimento> lista_uscite;
-    MovimentoDAO movimentoDAO;
-    ContoDAO contoDAO;
-    ListaCategorieDAO listaCategorieDAO;
+    private ListView listViewMovEntrate;
+    private ListView listViewMovUscite;
+    private MovimentoAdapter movimentoAdapterEntrate;
+    private MovimentoAdapter movimentoAdapterUscite;
+    private MovimentoDAO movimentoDAO;
+    private ContoDAO contoDAO;
+    private ListaCategorieDAO listaCategorieDAO;
 
-    DrawerLayout drawerLayout;
-    Toolbar toolbar;
-    NavigationView navigationView;
-    ActionBarDrawerToggle toggle;
+    private DrawerLayout drawerLayout;
+    private Toolbar toolbar;
+    private NavigationView navigationView;
+    private ActionBarDrawerToggle toggle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +60,7 @@ public class MovimentiActivity extends AppCompatActivity implements NavigationVi
         toolbar = findViewById(R.id.toolbar);
         navigationView = findViewById(R.id.nav_view);
         setSupportActionBar(toolbar);
+        getSupportActionBar().setTitle("MOVIMENTI");
         toggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar,
                 R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawerLayout.addDrawerListener(toggle);
@@ -68,24 +71,13 @@ public class MovimentiActivity extends AppCompatActivity implements NavigationVi
         movimentoAdapterEntrate = new MovimentoAdapter(this, R.layout.list_view_movimento_element, new ArrayList<Movimento>());
         listViewMovEntrate.setAdapter(movimentoAdapterEntrate);
 
-        movimentoDAO = new MovimentoDAO(getApplicationContext());
-        lista_entrate = (ArrayList<Movimento>) movimentoDAO.doRetrieveByType(1);
-        if(lista_entrate != null){
-            for(Movimento m : lista_entrate){
-                movimentoAdapterEntrate.add(m);
-            }
-        }
-
         listViewMovUscite = findViewById(R.id.list_view_movimenti_uscite);
         movimentoAdapterUscite = new MovimentoAdapter(this, R.layout.list_view_movimento_element, new ArrayList<Movimento>());
         listViewMovUscite.setAdapter(movimentoAdapterUscite);
 
-        lista_uscite = (ArrayList<Movimento>) movimentoDAO.doRetrieveByType(0);
-        if(lista_uscite != null){
-            for(Movimento m : lista_uscite){
-                movimentoAdapterUscite.add(m);
-            }
-        }
+        movimentoDAO = new MovimentoDAO(getApplicationContext());
+
+        new LoadMovimenti().execute();
 
         contoDAO = new ContoDAO(getApplicationContext());
         listaCategorieDAO = new ListaCategorieDAO(getApplicationContext());
@@ -137,6 +129,14 @@ public class MovimentiActivity extends AppCompatActivity implements NavigationVi
         }
     }
 
+    /**
+     * Metodo dell'interfaccia ModificaMovimentoDialog.ModificaMovimentoListener.
+     * Riceve il movimento, lo aggiorna nel db ed
+     * aggiorna il listView del layout dell'activity.
+     * @param oldMovimento vecchia versione del movimento, necessaria
+     *                     per rimuovere l'istanza dall'adapter del list view
+     * @param newMovimento movimento aggiornato
+     */
     @Override
     public void sendUpdatedMovimento(Movimento oldMovimento, Movimento newMovimento) {
         if(oldMovimento.getTipo() == 1)
@@ -155,16 +155,22 @@ public class MovimentiActivity extends AppCompatActivity implements NavigationVi
         }
     }
 
+    /**
+     * Metodo dell'interfaccia ModificaMovimentoDialog.ModificaMovimentoListener.
+     * Riceve il nuovo movimento creato, lo salva nel db ed
+     * aggiorna il listView del layout dell'activity.
+     * @param movimento nuovo movimento creato
+     * @param nome_conto nome del conto in cui inserire il movimento
+     */
     @Override
     public void sendNewMovimentoGenerico(Movimento movimento, String nome_conto) {
         movimentoDAO.insertMovimento(movimento, nome_conto);
-        if(movimento.getTipo() == 1){
-            movimentoAdapterEntrate.add(movimento);
-            movimentoAdapterEntrate.notifyDataSetChanged();
-        }else {
-            movimentoAdapterUscite.add(movimento);
-            movimentoAdapterUscite.notifyDataSetChanged();
-        }
+        // aggiorna la list view
+        movimentoAdapterEntrate.clear();
+        movimentoAdapterUscite.clear();
+        new LoadMovimenti().execute();
+        movimentoAdapterUscite.notifyDataSetChanged();
+        movimentoAdapterEntrate.notifyDataSetChanged();
     }
 
     public void showToastCustomizzato(int layout) {
@@ -197,33 +203,34 @@ public class MovimentiActivity extends AppCompatActivity implements NavigationVi
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-        Intent i;
-
-        switch(item.getItemId())
-        {
-            case R.id.home:
-                i = new Intent(MovimentiActivity.this, HomeActivity.class);
-                startActivity(i);
-                break;
-            case R.id.movimenti:
-                break;
-            case R.id.categorie:
-                i = new Intent(MovimentiActivity.this, CategorieActivity.class);
-                startActivity(i);
-                break;
-            case R.id.calcolatrice:
-                break;
-            case R.id.grafici:
-                break;
-            case R.id.listaSpesa:
-                break;
-            case R.id.impostazioni:
-                break;
-            case R.id.logout:
-                break;
+        if(item.getItemId() == R.id.logout){
+            this.finishAffinity();
+            System.exit(0);
         }
+        startActivity(MenuManager.menuItemSelected(item, MovimentiActivity.this));
         return true;
     }
 
+    class LoadMovimenti extends AsyncTask<Void, Void, ArrayList<Movimento>> {
 
+        @Override
+        protected ArrayList<Movimento> doInBackground(Void... voids) {
+            ArrayList<Movimento> list = (ArrayList<Movimento>) movimentoDAO.doRetrieveAll();
+            return list;
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<Movimento> list) {
+            if(list != null) {
+                for (Movimento movimento : list) {
+                    if(movimento.getTipo() == 0){
+                        movimentoAdapterUscite.add(movimento);
+                    }else {
+                        movimentoAdapterEntrate.add(movimento);
+                    }
+                }
+            }
+        }
+
+    }
 }

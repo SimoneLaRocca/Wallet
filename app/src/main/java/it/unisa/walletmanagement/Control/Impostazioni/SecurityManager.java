@@ -15,11 +15,20 @@ public class SecurityManager {
         this.fileName = "password.txt";
     }
 
+    /**
+     * Scrive la password nel file password.txt.
+     * @param password definita dall'utente
+     */
     public void doSavePassword(String password){
         String hash = md5(password);
         FileManager.writeToFile(context, fileName, hash, false);
     }
 
+    /**
+     * Stabilisce se i controlli di sicurezza sono abilitati.
+     * @return un valore booleano per segnalare se i controlli sono
+     * attivi/disattivi rispettivamente true/false
+     */
     public boolean isSecurityEnabled(){
         String hash_password = FileManager.readFromFile(context, fileName);
         if(hash_password != null && hash_password.length() > 0){
@@ -28,6 +37,13 @@ public class SecurityManager {
         return false;
     }
 
+    /**
+     * Controlla se l'hash della password inserita è uguale all'hash
+     * salvato nel file password.txt
+     * @param password password in chiaro
+     * @return un valore booleano per segnalare se il controllo è superato
+     * (true: superato, false: non superato)
+     */
     public boolean checkLogin(String password){
         String hash = md5(password);
         if(FileManager.readFromFile(context,fileName).equals(hash)){
@@ -36,6 +52,12 @@ public class SecurityManager {
         return false;
     }
 
+    /**
+     * Modifica la password.
+     * @param oldPassword vecchia password
+     * @param newPassword nuova password
+     * @return un valore booleano per segnalare se l'operazione è andata a buon fine
+     */
     public boolean doChangePassword(String oldPassword, String newPassword){
         String hash = md5(oldPassword);
         if(FileManager.deleteRecordFromFile(context, fileName, hash)){
@@ -44,6 +66,11 @@ public class SecurityManager {
         return false;
     }
 
+    /**
+     * Rimuovi il controllo di sicurezza.
+     * @param password password attuale
+     * @return un valore booleano per segnalare se l'operazione è andata a buon fine
+     */
     public boolean doRemovePassword(String password){
         String hash = md5(password);
         if(FileManager.deleteRecordFromFile(context, fileName, hash)){
@@ -52,6 +79,11 @@ public class SecurityManager {
         return false;
     }
 
+    /**
+     * Funzione di hash per crittografare la password.
+     * @param toEncrypt password in chiaro
+     * @return hash della password
+     */
     public static final String md5(final String toEncrypt) {
         try {
             final MessageDigest digest = MessageDigest.getInstance("md5");

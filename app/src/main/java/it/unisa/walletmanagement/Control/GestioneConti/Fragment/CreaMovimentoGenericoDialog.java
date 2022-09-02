@@ -20,6 +20,7 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
+import java.util.regex.Pattern;
 
 import it.unisa.walletmanagement.Model.Dao.ContoDAO;
 import it.unisa.walletmanagement.Model.Dao.ListaCategorieDAO;
@@ -158,24 +159,44 @@ public class CreaMovimentoGenericoDialog extends DialogFragment {
         return view;
     }
 
-    // validazione input
+    /**
+     * Verifica la correttezza di tutti i campi del fragment dialog.
+     * Se un campo non rispetta tutti i requisiti viene lanciato un errore.
+     * @return un valore booleano per segnalare se tutti i campi sono corretti
+     */
     private boolean CheckAllFields() {
-        if (etNome.getText().toString().length() == 0) {
-            etNome.setError("Questo campo è richiesto");
-            return false;
+
+        if(!Pattern.compile("[A-zÀ-ù0-9 -,]{3,30}").matcher(etNome.getText().toString()).matches()) {
+            if (etNome.getText().toString().length() == 0) {
+                etNome.setError("Questo campo è richiesto");
+                return false;
+            }else if(etNome.getText().toString().length() > 30){
+                etNome.setError("Questo campo non deve superare i 30 caratteri");
+                return false;
+            }
         }
 
-        if (etImporto.getText().toString().length() == 0) {
-            etImporto.setError("Questo campo è richiesto");
-            return false;
-        } else if(Float.parseFloat(etImporto.getText().toString()) < 0){
-            etImporto.setError("L'importo deve essere positivo");
-            return false;
+        if(!Pattern.compile("[0-9]{1,9}[.]{0,1}[0-9]{0,2}").matcher(etImporto.getText().toString()).matches()) {
+            float importo;
+            try {
+                importo = Float.parseFloat(etImporto.getText().toString());
+            }catch (Exception e){
+                etImporto.setError("Utilizza il formato (123.45)");
+                return false;
+            }
+            if (importo == 0) {
+                etImporto.setError("Questo campo è richiesto");
+                return false;
+            } else if (importo < 0) {
+                etImporto.setError("L'importo deve essere positivo");
+                return false;
+            }else {
+                etImporto.setError("Utilizza il formato (123.45)");
+                return false;
+            }
         }
 
         if (entrata.getTag().equals(false) && uscita.getTag().equals(false)) {
-            //entrata.setError("Scegliere il tipo");
-            //uscita.setError("Scegliere il tipo");
             Toast.makeText(getActivity().getApplicationContext(), "Scegliere il tipo", Toast.LENGTH_SHORT).show();
             return false;
         }

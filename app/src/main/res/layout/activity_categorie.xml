@@ -33,7 +33,10 @@
                 android:textAlignment="center"
                 android:textColor="@color/black"
                 android:textSize="20dp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:layout_marginHorizontal="20dp"
+                android:paddingVertical="10dp"
+                android:background="@drawable/border_light"/>
 
         </LinearLayout>
 
@@ -42,7 +45,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_margin="20dp"
-            android:background="@drawable/border_red_209" />
+            android:background="@drawable/border_light" />
 
     </LinearLayout>
 

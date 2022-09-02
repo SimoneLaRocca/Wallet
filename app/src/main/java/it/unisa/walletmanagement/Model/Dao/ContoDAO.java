@@ -10,6 +10,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.List;
 
 import it.unisa.walletmanagement.Model.Entity.Conto;
@@ -24,9 +25,15 @@ public class ContoDAO {
         this.databaseHelper = new DatabaseHelper(context);
     }
 
+    /**
+     * Inserisce un conto nel db.
+     * @param nome nome del conto
+     * @param saldo saldo del conto
+     * @return un valore booleano per segnalare se l'operazione è andata a buon fine
+     */
     public boolean insertConto(String nome, float saldo){
-        SQLiteDatabase sqLiteDatabase = databaseHelper.getWritableDatabase();
         ArrayList<Conto> list = (ArrayList<Conto>) doRetrieveAll();
+
         if(list != null){
             for(Conto conto : list){
                 if(conto.getNome().equals(nome)){
@@ -37,18 +44,28 @@ public class ContoDAO {
         ContentValues contentValues = new ContentValues();
         contentValues.put(SchemaDB.Conto.COLUMN_NOME, nome);
         contentValues.put(SchemaDB.Conto.COLUMN_SALDO, saldo);
+
+        SQLiteDatabase sqLiteDatabase = databaseHelper.getWritableDatabase();
         sqLiteDatabase.insert(SchemaDB.Conto.TABLE_NAME, null, contentValues);
         sqLiteDatabase.close();
         return true;
     }
 
-    public boolean deleteConto(String nome){
+    /**
+     * Rimuove il conto dal db.
+     * @param nome nome del conto
+     */
+    public void deleteConto(String nome){
         SQLiteDatabase sqLiteDatabase = databaseHelper.getWritableDatabase();
         sqLiteDatabase.delete(SchemaDB.Conto.TABLE_NAME, SchemaDB.Conto.COLUMN_NOME+"=?", new String[]{nome});
         sqLiteDatabase.close();
-        return true;
     }
 
+    /**
+     * Restituisce un conto con la lista completa dei suoi movimenti.
+     * @param nome nome del conto da selezionare
+     * @return oggetto Conto specificato dal nome
+     */
     public Conto doRetrieveByName(String nome){
         SQLiteDatabase sqLiteDatabase = databaseHelper.getReadableDatabase();
         Conto conto = new Conto();
@@ -61,6 +78,7 @@ public class ContoDAO {
                 " WHERE "+SchemaDB.Conto.COLUMN_NOME+" = ?";
         Cursor cursor = sqLiteDatabase.rawQuery(query, new String[]{nome});
         if(cursor.getCount() <= 0){
+            sqLiteDatabase.close();
             return null;
         }
         cursor.moveToFirst();
@@ -96,6 +114,10 @@ public class ContoDAO {
         return conto;
     }
 
+    /**
+     * Restituisce tutti i conti senza i loro movimenti.
+     * @return lista di tutti i conti nel db
+     */
     public List<Conto> doRetrieveAll(){
         SQLiteDatabase sqLiteDatabase = databaseHelper.getReadableDatabase();
         ArrayList<Conto> conti = new ArrayList<>();
@@ -103,6 +125,7 @@ public class ContoDAO {
 
         Cursor cursor = sqLiteDatabase.rawQuery(query, new String[]{});
         if(cursor.getCount() <= 0){
+            sqLiteDatabase.close();
             return null;
         }
         while (cursor.moveToNext()){
@@ -117,6 +140,11 @@ public class ContoDAO {
         return conti;
     }
 
+    /**
+     * Restituisce tutti i conti senza i loro movimenti ma con i loro saldi aggiornati.
+     * I saldi aggiornati fanno riferimento a tutti i movimenti presenti nel conto.
+     * @return lista di tutti i conti nel db con saldi aggiornati
+     */
     public List<Conto> doRetrieveAllWithCurrentBalance(){
         SQLiteDatabase sqLiteDatabase = databaseHelper.getReadableDatabase();
         ArrayList<Conto> conti = new ArrayList<>();
@@ -124,6 +152,7 @@ public class ContoDAO {
 
         Cursor cursor = sqLiteDatabase.rawQuery(query, new String[]{});
         if(cursor.getCount() <= 0){
+            sqLiteDatabase.close();
             return null;
         }
         while (cursor.moveToNext()){
@@ -154,6 +183,42 @@ public class ContoDAO {
         return conti;
     }
 
+    /**
+     * Restituisce il numero di movimenti per ogni conto salvato nel db.
+     * @return HashMap in cui le chiavi sono i nomi dei conti e
+     * i valori sono il numero totale dei movimenti
+     */
+    public HashMap<String, Integer> doCountMovimentiPerConto(){
+        SQLiteDatabase sqLiteDatabase = databaseHelper.getReadableDatabase();
+        HashMap<String, Integer> map = new HashMap<>();
+
+        String query = "SELECT C." + SchemaDB.Conto.COLUMN_NOME + ", COUNT(*) AS tot " +
+                "FROM " + SchemaDB.Conto.TABLE_NAME + " AS C, " + SchemaDB.Movimento.TABLE_NAME + " AS M " +
+                "WHERE C." + SchemaDB.Conto.COLUMN_NOME + " = M." + SchemaDB.Movimento.COLUMN_NOME_CONTO +
+                " GROUP BY C." + SchemaDB.Conto.COLUMN_NOME;
+
+        Cursor cursor = sqLiteDatabase.rawQuery(query, new String[]{});
+
+        if(cursor.getCount() <= 0){
+            sqLiteDatabase.close();
+            return map;
+        }
+
+        while (cursor.moveToNext()){
+            String name = cursor.getString(cursor.getColumnIndexOrThrow(SchemaDB.Conto.COLUMN_NOME));
+            int tot = cursor.getInt(cursor.getColumnIndexOrThrow("tot"));
+            map.put(name, tot);
+        }
+
+        sqLiteDatabase.close();
+        cursor.close();
+        return map;
+    }
+
+    /**
+     * Restituisce un conteggio totale dei conti presenti nel db.
+     * @return intero che specifica il numero di conti nel db
+     */
     public int doCount(){
         SQLiteDatabase sqLiteDatabase = databaseHelper.getReadableDatabase();
         String query = "SELECT COUNT("+SchemaDB.Conto.COLUMN_NOME+") AS tot FROM "+SchemaDB.Conto.TABLE_NAME;

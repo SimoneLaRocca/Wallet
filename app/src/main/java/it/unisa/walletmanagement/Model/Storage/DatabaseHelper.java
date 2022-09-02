@@ -26,7 +26,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     + "FOREIGN KEY("+SchemaDB.Movimento.COLUMN_NOME_CONTO+") REFERENCES "
                     + SchemaDB.Conto.TABLE_NAME+"("+SchemaDB.Conto.COLUMN_NOME+") ON UPDATE CASCADE ON DELETE CASCADE);";
 
-    final private static Integer VERSION = 1;
+    final private static Integer VERSION = 2;
     final private Context context;
 
     public DatabaseHelper(@Nullable Context context) {
@@ -54,9 +54,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     public void clearDatabase() {
-        SQLiteDatabase sqLiteDatabase = this.getReadableDatabase();
-        String query = "DELETE FROM " + SchemaDB.Conto.TABLE_NAME;
-        sqLiteDatabase.execSQL(query);
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        sqLiteDatabase.execSQL("DELETE FROM " + SchemaDB.Conto.TABLE_NAME);
+        sqLiteDatabase.execSQL("DELETE FROM " + SchemaDB.Movimento.TABLE_NAME);
+        sqLiteDatabase.close();
     }
 
     public void deleteDatabase() {
